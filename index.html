@@ -16,8 +16,10 @@
 		<script src="lib/jquery/jquery-ui-1.8.6.custom.min.js"></script>
 		
 		<!-- Our JavaScript Sources -->
-		<script src="src/initNew.js"></script>
-		<script src="automagicalCss/automagicalCss.js"></script>
+		<script src="src/automagical.js"></script>
+		<script src="src/automagicalCss.js"></script>
+		<script src="src/goldenGrid.js"></script>
+		<script src="src/postProcessing.js"></script>
 		
 		<!-- CKEditor JQuery Plugin -->
 		<script src="src/ckeditor/ckeditor.js"></script>
@@ -28,14 +30,6 @@
 			$(document).ready(function()
 			{
 				builder.init.initialize();
-				$('#lblShowAttributes').text ("<<");
-				$('a#getHTML').click(function(){
-					var canvasHTML = $('div#canvas').html();
-					var allHTML = $.ajax({async:false, url:'template.html',}).responseText;
-					allHTML = allHTML.replace(/\{body\}/m, canvasHTML);
-					//Output HTML to console
-					console.log(allHTML);
-				});
 			});
 		
 		</script>
@@ -56,18 +50,13 @@
 			</div>
 			
 			<!-- Tab for toggling menu view -->
-			<div id="menuDisplayControl"><label id="lblDropDown">Show Menu</label></div>
+			<div id="menuDisplayControl" class="showTabs"><label id="lblDropDown">Show Menu</label></div>
 		</div>
 			
 		<div id="canvas" class="container"></div>
 		
-		<div style="position: absolute; top: 35%; right: 0; height: 400px; width: 320px;">
-			<div style="position: absolute; top: 40%; float: left; height: auto; width: 20px; padding: 10px 0 10px 10px; border: black solid 1px; background-color: #c9c9c9;"><label id="lblShowAttributes"></label></div>
-			<div style="float: right; width: 290px; margin:0 0 20px 0; background-color: #c9c9c9;">
+		<div id="attributesWrapper">
 
-				<h3 style=" text-align: center;">Attributes</h3>
-				<div style="border: solid grey 1px; height:320px; background-color: #333333; margin: 0 20px 20px 20px;">&nbsp;</div>
-			</div>
 		</div>
 	</body>
 

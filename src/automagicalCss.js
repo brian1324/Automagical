@@ -2,6 +2,7 @@
 	$.fn.automagicalCss = function(options){
 		var opts = $.extend({}, $.fn.automagicalCss.defaults, options);
 		
+		//Append a link to the DOM for the stylesheet for this plugin.
 		jQuery('<link/>',{
 			rel: 'stylesheet',
 			type: 'text/css',
@@ -12,7 +13,7 @@
 		var attributes_html = 
 		'<div id="attributes-panel" align="right">' +
 			'<div id="showHide">' +
-				'<label id="showHideLabel">&gt&gt</label>' +
+				'<label id="showHideLabel">&gt&gt </label>' +
 			'</div>' +
 			'<div id="marginDiv">' +
 				'<div id="attributes-selector">' +
@@ -34,25 +35,30 @@
 		var attributes_list = $('#attributes-list', wrapper);
 		var selected = null;
 		
+		//Animate (show/hide) the attributes box when the user clicks the handle ('>>') component
 		$('#showHide', wrapper).click(function(){
 			var panel = $('#attributes-panel');
 			var label = $('#showHideLabel');
 			var marginDiv = $('#marginDiv');
 			
-			if (parseInt(panel.css('marginLeft'), 10) == 0){
-				panel.animate({marginLeft: attributes_list.outerWidth()});
-				marginDiv.hide();
-				label.text("<<");
+			//Here we are animating the components marginLeft property to achieve the desired effect
+			if (marginDiv.is(":visible")){
+				marginDiv.animate({width: 'hide', 'opacity':'toggle'});
+				$('#showHide').animate({marginLeft: attributes_list.outerWidth()});
+				label.text("<< ");
 			} else{
-				panel.animate({marginLeft: 0});
-				marginDiv.show();
-				label.text(">>");
+				marginDiv.animate({width: 'show', 'opacity':'toggle'});
+				$('#showHide').animate({marginLeft: 0});
+				label.text(">> ");
 			}
 		});
 		
+
 		//When an element on the canvas is clicked, populate the css attributes list
-		/*$('#canvas *').live('click', function(){
+		$('#canvas .component').live('click', function(){
 			selected = $(this);
+			var marginDiv = $('#marginDiv');
+			var label = $('#showHideLabel');
 			
 			selector_field.val($.fn.automagicalCss.extractCssSelectorPath(selected));
 			attributes_list.empty();
@@ -62,17 +68,33 @@
 			jQuery.each(typeMapping, function(key, value){
 				var validStyle = "";
 				jQuery.each(value, function(index, style){
-					if (selected.css(style) != null) validStyle = style;
+					if (selected.css(style) != null) {
+						validStyle = style;
+					}
 				});
+				
 				attributes_list.append('<label>' + key + '</label> <input class="cssInput" type="text" value="' + 
 										selected.css(validStyle) + '" cssValue="' + key + '" /> <br/>');
 			});
 
-		});*/
+			//Highlight clicked element
+			$('#canvas .component').removeClass('outline-element-clicked');
+			$(this).addClass('outline-element-clicked');
+			
+			//Show the attributes box if it already isn't shown
+			if (!(marginDiv.is(":visible"))){
+				marginDiv.animate({width: 'show', 'opacity':'toggle'});
+				$('#showHide').animate({marginLeft: 0});
+				label.text(">> ");
+			} 
+		});
 		
 		//When an element on the canvas is clicked, populate the css attributes list
-		$('#canvas *').live('resize', function(event, ui){
+		$('#canvas .component').live('resize', function(event, ui){
 		
+			//TODO: On resize, we have to make sure the attributes box is showing the right element
+			
+			
 			//Need to do this to handle case where during resize mouse moves outside of element being resized
 			$('#canvas *').removeClass('outline-element');				
 			$(this).addClass('outline-element');
@@ -100,6 +122,7 @@
 			$(this).addClass('outline-element');
 		});
 		
+		//Show/hide the outline when we hover over an element. We could probably use hover() for this
 		$('#canvas .component').live('mouseenter', function(event){
 			$('#canvas *').removeClass('outline-element');
 			$(this).addClass('outline-element');
@@ -109,37 +132,10 @@
 			$(this).removeClass('outline-element');
 		});
 		
-		$('#canvas .component').live('click', function(event){
-			$('#canvas .component').removeClass('outline-element-clicked');
-			$(this).addClass('outline-element-clicked');
-		});
-		
-		//TODO: We have to add this functionality later in a way where it plays nice with initalization. This functionality is
-		//necessary when working with stuff that's not from scratch
-		/*
-		//Add drag and resize functionality
-		$('#canvas *').mouseenter(function(){
-			var element = $(this);
-			
-			element.draggable({resize : function(event, ui){
-				
-			}});
-			
-			element.resizable({drag : function(event, ui){
-				
-			}});
-		});
-		
-		//Remove the drag and drop functionality from the component
-		$('#canvas *').mouseleave(function(){
-			var element = $(this);
-			element.resizable('destroy');
-			element.draggable('destroy');
-		});
-		*/
 
 	};
 	
+	//Extract the full path of an element
 	$.fn.automagicalCss.extractCssSelectorPath = function(element){
 		if (element.attr('id')){
 			return '#' + element.attr('id');
@@ -164,7 +160,7 @@
 	};
 	
 	$.fn.automagicalCss.defaults = {
-		stylesheet : 'automagicalCss/css/jquery.automagicalCss.css',
+		stylesheet : 'Styles/jquery.automagicalCss.css',
 		position: 'right'
 	};
 	

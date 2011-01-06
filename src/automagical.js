@@ -1,4 +1,7 @@
 var builder;
+var LONG_LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla laoreet venenatis nisl, at viverra urna semper eget. Fusce pellentesque justo id ligula tincidunt volutpat. Suspendisse ut metus sed tellus dictum imperdiet. Nunc vestibulum justo eu velit blandit laoreet. Donec tempor sollicitudin eleifend. Praesent venenatis ante quis magna vulputate ultricies. Duis fringilla pharetra tellus ut sollicitudin. Vivamus tempor nunc eu neque euismod nec adipiscing tellus faucibus. In massa turpis, congue eget ullamcorper nec, laoreet vel odio. Pellentesque a nisl ac erat molestie pharetra sed ac est. Sed tempor luctus odio, eget pretium tellus venenatis pretium. Donec neque lectus, semper egestas consectetur vel, tincidunt sit amet libero. Nam lectus risus, accumsan sit amet volutpat ac, volutpat id nisl. Cras urna velit, aliquet a viverra a, condimentum at justo. Sed non massa non neque molestie interdum mattis eu enim.";
+var SHORT_LOREM_IPSUM = "Lorem ipsum dolor";
+
 if (!builder)
 {
 	builder =
@@ -10,8 +13,6 @@ builder.init = (function ()
 	var init =
 	{
 	},
-		/* DEBUGGING VARIABLE: Use this to specify whether to use the grid system or not*/
-		gridSystem = true,
 		
 		hideElements,
 		initializeMenuDisplayControl,
@@ -20,24 +21,62 @@ builder.init = (function ()
 		initializeDroppableAreas,
 		clearDroppableAreas,
 		reinitializeDroppableAreas,
+		initializeGetHtml,
+		getOuterHTML,
+		recursiveHTMLAppendFunction,
+		defineInlineCssProperty;
 		
-		snapToGrid,
-		snapSize;
 		
-		
+	/* This function returns the entire html of an element, including its tag*/	
+	getOuterHTML = function(element) {
+    	return $('<div>').append( element.eq(0).clone() ).html();
+	};
+	
+	initializeGetHtml = function(){
+		$('a#getHTML').click(function(){
+			$('#canvas').postProcessing();
+		});
+	}
+
+	
 	hideElements = function () {
 		$("#navContainer").hide();
 		$("#menuToolbox").hide();
 	};
 	
 	initializeMenuDisplayControl = function() {
-		$("#lblDropDown").click(function(){
+		//TODO: Find a way to bind and unbind hover properly
+		$.fn.bindHover = function(e){
+			$(this).bind({
+				mouseover: function(){
+			    	$(this).css('opacity', '1.0');
+			  },
+			  	mouseout: function(){$(this).css('opacity', '0.4');
+			  }
+			});
+		};
+
+		$.fn.unbindHover = function (){
+			$(this).unbind('mouseover');
+			$(this).unbind('mouseout');
+		};
+	
+		
+		$("#menuDisplayControl").bindHover();
+		
+		$("#menuDisplayControl").click(function(){
 			if($("#navContainer").is(":visible")){
 				$("#navContainer").slideUp("fast");
-				$("#lblDropDown").text("Show Menu");										
+				$("#lblDropDown").text("Show Menu");							
+				$("#lblDropDown").css('color', '#292929');	
+				console.log($(this).attr('id') + " hidden");
+				$(this).bindHover();
 			}else{
 				$("#navContainer").slideDown("fast");
-				$("#lblDropDown").text("Hide Menu");				
+				$("#lblDropDown").text("Hide Menu");
+				$("#lblDropDown").css('color', '#ee4411');
+				console.log($(this).attr('id') + " shown");
+				$(this).unbindHover();
 			}
 		});
 	
@@ -83,52 +122,10 @@ builder.init = (function ()
 		});
 	};
 	
-	/* This function snaps the dropped element to the underlying grid*/
-	snapToGrid = function(element){
-		
-		
-		var top = 70 * Math.round(parseInt(element.css("top").replace("px",""), 10)/70);
-		var left = 70 * Math.round(parseInt(element.css("left").replace("px",""), 10)/70);
-		
-		//if element is at left most region, no need for a left margin; also no need for margin if it is an element inside another
-		if ((left === 0) || (element.parent().attr("id") != "canvas")) {
-			element.css("margin-left", "0px");
-			
-		}
-		else {
-			element.css("margin-left", "10px");
-		}
-		element.css("margin-bottom", "10px");
-
-		element.css("top",	top + 'px');
-		element.css("left", left + 'px');
-	};
-	
-	/* This function snaps the size of a resized element so it conforms to the underlying grid*/
-	snapSize = function(element){
-	
-		var width = 70 * Math.round(element.width() / 70);
-		var height = 70 * Math.round(element.height() / 70);
-		
-		if (width === 0) {
-			width = 70;
-		}
-		
-		if (height === 0) {
-			height = 70;
-		}
-		
-		element.css('width', width + 'px');
-		element.css('height', height + 'px');
-	};
-	
-
-
-	
 	populateToolboxList = function(folderName)
 	{
 	
-				//Populate the Toolbox items using the json file in the correct folder pointed to by main json file
+			//Populate the Toolbox items using the json file in the correct folder pointed to by main json file
 			$.getJSON('Toolbox/'+folderName+'/'+folderName+'.json',function(jsonInner, statusInnter){
 
 				//Clear everything currently in ToolBox
@@ -136,6 +133,7 @@ builder.init = (function ()
 				
 				//Append to the nav
 				$.each(jsonInner.main.elements,function(nameInner, elementInner){
+						console.log('Populating ' + folderName +' with element ' + elementInner.name);
 						$('nav#menuToolbox').append('<a href=\"#\" id=\"'+folderName+elementInner.name+'\"><img src=\"Toolbox/General/images/'+elementInner.icon+'\" alt=\"'+elementInner.name+'\" width=\"55\" height=\"27\" /></a>');
 						
 					//Make the item draggable
@@ -144,26 +142,32 @@ builder.init = (function ()
 						appendTo: "body",
 						containment: "#canvas",
 						helper: function() {
+							var response = elementInner.tag;
+							switch (elementInner.name){
+								case('Text'):
+									response = response.replace('{placeholder}', LONG_LOREM_IPSUM);
+									break;
+								case ('Label'):
+									response = response.replace('{placeholder}', SHORT_LOREM_IPSUM);
+									break;
+								case ('Heading'):
+									response = response.replace('{placeholder}', SHORT_LOREM_IPSUM);
+									break;
+								default:
+									response = elementInner.tag;
+									break;
+							}
 							//Return the new tag to be created
-						   return $( elementInner.tag )[0];
+						   return $(response.replace('{placeholder}', LONG_LOREM_IPSUM))[0];
 						}
 
 					});
-					
-
-			
-				});
-				
-
-				
+				});	
 			});
 	};
 	
 	initializeDroppableAreas = function( droppableAttr )
 	{
-
-
-		
 		droppableAttr.droppable({
 			greedy: true,	//Stop droppable event propogation
 			drop: function(ev, ui) { 
@@ -176,38 +180,37 @@ builder.init = (function ()
 						.resizable({
 							containment:"parent",
 							resize: function(event, ui) {
-								
-								if (gridSystem) {				
-									snapSize(cloned);
-								}
-					
-
+								//This function can now be removed as the golden grid snapping has been factored out
 							}
-							
-						
 						})
 					);
 					
+					//To set default id, get how many of this specific tag already exist on document
+					var idNumber = $("#canvas " + cloned.get(0).tagName + '.component').size();
 					
+					//If an element with this id number exists already, increment id number until it doesn't
+					while ($('#'+cloned.get(0).tagName + '_' + idNumber).size() !== 0) {
+						idNumber++;
+					}
 					
+					//Set default id for element
+					cloned.attr('id', cloned.get(0).tagName + '-' + idNumber);
 					
 					//Need these offsets when appending children to a container that's not the canvas
 					cloned.css('top', ui.position.top - $(this).offset().top);
 					cloned.css('left', ui.position.left - $(this).offset().left);
 					
-					if (gridSystem) {
-						snapToGrid(cloned);
-						snapSize(cloned);
-					}
-					
+
 					
 					//TODO: Find a better solution. Hack so that nested dynamic droppables will work.
 					if ($(cloned).hasClass("container")) {
 						clearDroppableAreas();
 						initializeDroppableAreas($(cloned));
 						reinitializeDroppableAreas();
-
 					}
+					
+					//Make a custom event to show when element is first added to canvas
+					cloned.trigger('appendToCanvas');
 
 				}
 				else { //Element already on canvas
@@ -218,11 +221,6 @@ builder.init = (function ()
 					//Need these offsets when appending children to a container that's not the canvas
 					$(ui.draggable).css('top', ui.offset.top - $(this).offset().top);
 					$(ui.draggable).css('left', ui.offset.left - $(this).offset().left);
-					
-					if (gridSystem) {
-						snapToGrid(ui.draggable);
-						snapSize(ui.draggable);
-					}
 				}
 			}
 		});
@@ -230,7 +228,7 @@ builder.init = (function ()
 	
 	reinitializeDroppableAreas = function() {
 	
-		var droppableAreas = $("#canvasContainer .container");
+		var droppableAreas = $("#canvas .container");
 		
 		$.each(droppableAreas, function(index, element) { 
 			initializeDroppableAreas($(element));
@@ -240,19 +238,17 @@ builder.init = (function ()
 	
 	clearDroppableAreas = function() {
 	
-		var droppableAreas = $("#canvasContainer .container");
+		var droppableAreas = $("#canvas .container");
 		
 		$.each(droppableAreas, function(index, element) { 
 			$(element).droppable("destroy");
 		});
-
-
-	
 	};
 	
 	init.initialize = function ()
 	{
 		initializeMenuDisplayControl();
+		initializeGetHtml();
 		hideElements();
 		populateNavList();
 		initializeDroppableAreas($("#canvas"));
